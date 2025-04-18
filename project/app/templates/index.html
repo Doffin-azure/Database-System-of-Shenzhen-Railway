@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ride Management System</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        input[type="time"],
+        select {
+            padding: 8px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            width: calc(100% - 20px);
+        }
+
+        button {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table,
+        th,
+        td {
+            border: 1px solid black;
+        }
+
+        th,
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        .role-section {
+            display: none;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Ride Management System</h1>
+
+        <!-- Role Selection -->
+        <h2>Select Role</h2>
+        <select id="roleSelect">
+            <option value="">Select Role</option>
+            <option value="passenger">Passenger</option>
+            <option value="admin">Admin</option>
+        </select>
+
+        <!-- Passenger Section -->
+        <div id="passengerSection" class="role-section">
+            <h2>Passenger Actions</h2>
+
+            <!-- Recharge Card Form -->
+            <h3>Recharge Card</h3>
+            <form id="rechargeForm">
+                <input type="text" id="rechargeCode" placeholder="Card Code" required>
+                <input type="number" id="rechargeMoney" placeholder="Recharge Amount" required>
+                <button type="submit">Recharge</button>
+            </form>
+            <div id="rechargeResult" class="result"></div>
+
+
+            <!-- Shortest Path Form for Passenger -->
+            <h3>Find Shortest Path</h3>
+            <form id="passengerShortestPathForm">
+                <input type="text" id="passengerShortestPathSource" placeholder="Source Station" required>
+                <input type="text" id="passengerShortestPathTarget" placeholder="Target Station" required>
+                <button type="submit">Find Shortest Path</button>
+            </form>
+            <div id="passengerShortestPathResult" class="result"></div>
+
+            <!-- Alternative Paths Form for Passenger -->
+            <h3>Find Alternative Paths</h3>
+            <form id="passengerAlternativePathsForm">
+                <input type="text" id="passengerAlternativePathsSource" placeholder="Source Station" required>
+                <input type="text" id="passengerAlternativePathsTarget" placeholder="Target Station" required>
+                <button type="submit">Find Alternative Paths</button>
+            </form>
+            <div id="passengerAlternativePathsResult" class="result"></div>
+
+            <!-- Board Passenger Form -->
+            <h3>Board Passenger</h3>
+            <form id="boardForm">
+                <input type="text" id="boardUser" placeholder="User ID" required>
+                <input type="text" id="boardStartStation" placeholder="Start Station" required>
+                <button type="submit">Board</button>
+            </form>
+            <div id="boardResult" class="result"></div>
+
+            <!-- Exit Passenger Form -->
+            <h3>Exit Passenger</h3>
+            <form id="exitForm">
+                <input type="text" id="exitUser" placeholder="User ID" required>
+                <input type="text" id="exitEndStation" placeholder="End Station" required>
+                <input type="text" id="exitBussinessType" placeholder="Business Type (True/False)" required>
+                <button type="submit">Exit</button>
+            </form>
+            <div id="exitResult" class="result"></div>
+
+            <!-- Active Rides -->
+            <h3>Active Rides</h3>
+            <button id="getActiveRides">Get Active Rides</button>
+            <button id="downloadActiveRidesExcel">Download Active Rides Excel</button>
+            <div id="activeRidesResult" class="result"></div>
+
+            <!-- Search Rides Form -->
+            <h3>Search Rides</h3>
+            <form id="searchForm">
+                <input type="text" id="searchUser" placeholder="User ID">
+                <input type="text" id="searchStartStation" placeholder="Start Station">
+                <input type="text" id="searchEndStation" placeholder="End Station">
+                <input type="date" id="searchStartDate">
+                <input type="date" id="searchEndDate">
+                <button type="submit">Search</button>
+            </form>
+            <button id="downloadSearchRidesExcel">Download Search Rides Excel</button>
+            <div id="searchResult" class="result"></div>
+
+            <!-- Register Form -->
+            <h3>Register</h3>
+            <form id="registerForm">
+                <select id="registerType" required>
+                    <option value="card">Card</option>
+                    <option value="passenger">Passenger</option>
+                </select>
+                <div id="cardFields" style="display: none;">
+                    <input type="text" id="cardMoney" placeholder="Initial Money">
+                </div>
+                <div id="passengerFields" style="display: none;">
+                    <input type="text" id="passengerIdNumber" placeholder="ID Number">
+                    <input type="text" id="passengerName" placeholder="Name">
+                    <input type="text" id="passengerPhoneNumber" placeholder="Phone Number">
+                    <input type="text" id="passengerGender" placeholder="Gender">
+                    <input type="text" id="passengerDistrict" placeholder="District">
+                </div>
+                <button type="submit">Register</button>
+            </form>
+            <div id="registerResult" class="result"></div>
+        </div>
+
+        <!-- Admin Section -->
+        <div id="adminSection" class="role-section">
+            <h2>Admin Actions</h2>
+
+            <!-- Download Station Graph XLSX for Passenger -->
+            <h3>Download Station Graph</h3>
+            <button id="downloadStationGraph">Download Station Graph XLSX</button>
+
+
+            <!-- Shortest Path Form -->
+            <h3>Find Shortest Path</h3>
+            <form id="shortestPathForm">
+                <input type="text" id="shortestPathSource" placeholder="Source Station" required>
+                <input type="text" id="shortestPathTarget" placeholder="Target Station" required>
+                <button type="submit">Find Shortest Path</button>
+            </form>
+            <div id="shortestPathResult" class="result"></div>
+
+            <!-- Alternative Paths Form -->
+            <h3>Find Alternative Paths</h3>
+            <form id="alternativePathsForm">
+                <input type="text" id="alternativePathsSource" placeholder="Source Station" required>
+                <input type="text" id="alternativePathsTarget" placeholder="Target Station" required>
+                <button type="submit">Find Alternative Paths</button>
+            </form>
+            <div id="alternativePathsResult" class="result"></div>
+
+            <h3>Get Station by Position</h3>
+            <form id="getStationByPositionForm">
+                <input type="text" id="positionStationName" placeholder="Station Name" required>
+                <input type="text" id="positionLineName" placeholder="Line Name" required>
+                <input type="number" id="positionN" placeholder="N (number of stations)" required>
+                <button type="submit">Get Stations</button>
+            </form>
+            <div id="getStationByPositionResult" class="result"></div>
+
+            <!-- Insert Station Form -->
+            <h3>Insert Station</h3>
+            <form id="stationInsertForm">
+                <input type="text" id="stationChineseName" placeholder="Chinese Name" required>
+                <input type="text" id="stationEnglishName" placeholder="English Name" required>
+                <input type="text" id="stationDistrict" placeholder="District" required>
+                <input type="text" id="stationIntro" placeholder="Intro" required>
+                <select id="stationStatus" required>
+                    <option value="运营中">运营中</option>
+                    <option value="关闭中">关闭中</option>
+                    <option value="建设中">建设中</option>
+                </select>
+                <button type="submit">Insert Station</button>
+            </form>
+            <div id="stationInsertResult" class="result"></div>
+
+            <!-- Delete Station -->
+            <h3>Delete Station</h3>
+            <form id="stationDeleteForm">
+                <input type="text" id="deleteStationChineseName" placeholder="Chinese Name">
+                <input type="text" id="deleteStationEnglishName" placeholder="English Name">
+                <button type="submit">Delete Station</button>
+            </form>
+            <div id="stationDeleteResult" class="result"></div>
+
+            <!-- Update Station Form -->
+            <h3>Update Station</h3>
+            <form id="stationUpdateForm">
+                <input type="text" id="updateStationOldEnglishName" placeholder="Old English Name" required>
+                <input type="text" id="updateStationChineseName" placeholder="New Chinese Name">
+                <input type="text" id="updateStationEnglishName" placeholder="New English Name">
+                <input type="text" id="updateStationDistrict" placeholder="New District">
+                <input type="text" id="updateStationIntro" placeholder="New Intro">
+                <select id="updateStationStatus">
+                    <option value="运营中">运营中</option>
+                    <option value="关闭中">关闭中</option>
+                    <option value="建设中">建设中</option>
+                </select>
+                <button type="submit">Update Station</button>
+            </form>
+            <div id="stationUpdateResult" class="result"></div>
+
+            <!-- Insert Line -->
+            <h3>Insert Line</h3>
+            <form id="lineInsertForm">
+                <input type="text" id="lineName" placeholder="Line Name" required>
+                <input type="time" id="lineStartTime" placeholder="Start Time" required>
+                <input type="time" id="lineEndTime" placeholder="End Time" required>
+                <input type="text" id="lineIntro" placeholder="Intro" required>
+                <input type="text" id="lineMileage" placeholder="Mileage" required>
+                <input type="text" id="lineColor" placeholder="Color" required>
+                <input type="date" id="lineFirstOpening" placeholder="First Opening" required>
+                <input type="text" id="lineUrl" placeholder="URL" required>
+                <button type="submit">Insert Line</button>
+            </form>
+            <div id="lineInsertResult" class="result"></div>
+
+            <!-- Delete Line -->
+            <h3>Delete Line</h3>
+            <form id="lineDeleteForm">
+                <input type="text" id="deleteLineName" placeholder="Line Name" required>
+                <button type="submit">Delete Line</button>
+            </form>
+            <div id="lineDeleteResult" class="result"></div>
+
+            <!-- Update Line -->
+            <h3>Update Line</h3>
+            <form id="lineUpdateForm">
+                <input type="text" id="updateLineOldName" placeholder="Old Line Name" required>
+                <input type="text" id="updateLineName" placeholder="New Line Name">
+                <input type="time" id="updateLineStartTime" placeholder="New Start Time">
+                <input type="time" id="updateLineEndTime" placeholder="New End Time">
+                <input type="text" id="updateLineIntro" placeholder="New Intro">
+                <input type="text" id="updateLineMileage" placeholder="New Mileage">
+                <input type="text" id="updateLineColor" placeholder="New Color">
+                <input type="date" id="updateLineFirstOpening" placeholder="New First Opening">
+                <input type="text" id="updateLineUrl" placeholder="New URL">
+                <button type="submit">Update Line</button>
+            </form>
+            <div id="lineUpdateResult" class="result"></div>
+
+            <!-- Insert Relation -->
+            <h3>Insert Relation</h3>
+            <form id="relationInsertForm">
+                <input type="text" id="relationLineName" placeholder="Line Name" required>
+                <input type="text" id="relationAfterName" placeholder="After Station Name or SPECIAL for first">
+                <input type="text" id="relationStationNames" placeholder="Station Names (comma separated)" required>
+                <button type="submit">Insert Relation</button>
+            </form>
+            <div id="relationInsertResult" class="result"></div>
+
+            <!-- Insert Relation at Position Form for Admin -->
+            <h3>Insert Relation at Position</h3>
+            <form id="relationInsertAtPositionForm">
+                <input type="text" id="relationLineNameAtPosition" placeholder="Line Name" required>
+                <input type="number" id="relationInsertPosition" placeholder="Position" required>
+                <textarea id="relationStationNamesAtPosition" placeholder="Station Names (comma separated)"
+                    required></textarea>
+                <label>
+                    <input type="checkbox" id="relationUpdateCode" checked> Update Station Code
+                </label>
+                <button type="submit">Insert Relation at Position</button>
+            </form>
+            <div id="relationInsertAtPositionResult" class="result"></div>
+
+
+            <!-- Delete Relation -->
+            <h3>Delete Relation</h3>
+            <form id="relationDeleteForm">
+                <input type="text" id="deleteRelationLineName" placeholder="Line Name" required>
+                <input type="text" id="deleteRelationStationName" placeholder="Station Name" required>
+                <button type="submit">Delete Relation</button>
+            </form>
+            <div id="relationDeleteResult" class="result"></div>
+        </div>
+
+        <script>
+            document.getElementById('roleSelect').addEventListener('change', function () {
+                var passengerSection = document.getElementById('passengerSection');
+                var adminSection = document.getElementById('adminSection');
+
+                passengerSection.style.display = this.value === 'passenger' ? 'block' : 'none';
+                adminSection.style.display = this.value === 'admin' ? 'block' : 'none';
+            });
+
+            // Initialize visibility
+            document.getElementById('roleSelect').dispatchEvent(new Event('change'));
+
+            // Passenger related functions
+
+
+
+            document.getElementById('registerType').addEventListener('change', function () {
+                var cardFields = document.getElementById('cardFields');
+                var passengerFields = document.getElementById('passengerFields');
+                var cardMoney = document.getElementById('cardMoney');
+                var passengerInputs = passengerFields.getElementsByTagName('input');
+
+                if (this.value === 'card') {
+                    cardFields.style.display = 'block';
+                    cardMoney.required = true;
+                    for (var i = 0; i < passengerInputs.length; i++) {
+                        passengerInputs[i].required = false;
+                    }
+                    passengerFields.style.display = 'none';
+                } else if (this.value === 'passenger') {
+                    passengerFields.style.display = 'block';
+                    for (var i = 0; i < passengerInputs.length; i++) {
+                        passengerInputs[i].required = true;
+                    }
+                    cardMoney.required = false;
+                    cardFields.style.display = 'none';
+                }
+            });
+
+            // Initialize visibility
+            document.getElementById('registerType').dispatchEvent(new Event('change'));
+
+            // Function to handle form submission for registering
+            document.getElementById('registerForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const registerType = document.getElementById('registerType').value;
+
+                let data;
+                if (registerType === 'card') {
+                    data = {
+                        register_type: registerType,
+                        money: document.getElementById('cardMoney').value
+                    };
+                } else {
+                    data = {
+                        register_type: registerType,
+                        id_number: document.getElementById('passengerIdNumber').value,
+                        name: document.getElementById('passengerName').value,
+                        phone_number: document.getElementById('passengerPhoneNumber').value,
+                        gender: document.getElementById('passengerGender').value,
+                        district: document.getElementById('passengerDistrict').value
+                    };
+                }
+
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                document.getElementById('registerResult').innerHTML = generateMessage(result);
+
+                // clear form
+                document.getElementById('cardMoney').value = '';
+                document.getElementById('passengerIdNumber').value = '';
+                document.getElementById('passengerName').value = '';
+                document.getElementById('passengerPhoneNumber').value = '';
+                document.getElementById('passengerGender').value = '';
+                document.getElementById('passengerDistrict').value = '';
+
+
+            });
+
+            // Function to handle form submission for getting station by position
+            document.getElementById('getStationByPositionForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const stationName = document.getElementById('positionStationName').value;
+                const lineName = document.getElementById('positionLineName').value;
+                const n = parseInt(document.getElementById('positionN').value);
+
+                const response = await fetch('/admin/get_station_by_position', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ station_name: stationName, line_name: lineName, n: n })
+                });
+                const result = await response.json();
+                document.getElementById('getStationByPositionResult').innerHTML = generateMessage(result);
+            });
+
+
+            // Function to handle form submission for finding alternative paths for passengers
+            document.getElementById('passengerAlternativePathsForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const source = document.getElementById('passengerAlternativePathsSource').value;
+                const target = document.getElementById('passengerAlternativePathsTarget').value;
+
+                const response = await fetch('/alternative_paths', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ source, target })
+                });
+                const result = await response.json();
+                document.getElementById('passengerAlternativePathsResult').innerHTML = generateAlternativePathsMessage(result);
+            });
+
+
+            // Function to handle form submission for finding shortest path for passengers
+            document.getElementById('passengerShortestPathForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const source = document.getElementById('passengerShortestPathSource').value;
+                const target = document.getElementById('passengerShortestPathTarget').value;
+
+                const response = await fetch('/shortest_path', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ source, target })
+                });
+                const result = await response.json();
+                document.getElementById('passengerShortestPathResult').innerHTML = generateMessage(result);
+            });
+
+
+            // Function to handle form submission for boarding passenger
+            document.getElementById('boardForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const user = document.getElementById('boardUser').value;
+                const startStation = document.getElementById('boardStartStation').value;
+
+                const response = await fetch('/board', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user, start_station: startStation })
+                });
+                const result = await response.json();
+                document.getElementById('boardResult').innerHTML = generateMessage(result);
+            });
+
+            // Function to handle form submission for exiting passenger
+            document.getElementById('exitForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const user = document.getElementById('exitUser').value;
+                const endStation = document.getElementById('exitEndStation').value;
+                const bussinessType = document.getElementById('exitBussinessType').value;
+
+                const response = await fetch('/exit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ user, end_station: endStation, bussiness_type: bussinessType })
+                });
+                const result = await response.json();
+                document.getElementById('exitResult').innerHTML = generateMessage(result);
+            });
+
+            // Function to get active rides
+            document.getElementById('getActiveRides').addEventListener('click', async function () {
+                const response = await fetch('/active_rides');
+                const result = await response.json();
+                document.getElementById('activeRidesResult').innerHTML = generateTable(result.active_rides, true);
+                // Save the result to be used later for download
+                window.activeRidesData = result.active_rides;
+            });
+
+            // Function to handle form submission for searching rides
+            document.getElementById('searchForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const user = document.getElementById('searchUser').value;
+                const startStation = document.getElementById('searchStartStation').value;
+                const endStation = document.getElementById('searchEndStation').value;
+                const startDate = document.getElementById('searchStartDate').value;
+                const endDate = document.getElementById('searchEndDate').value;
+
+                const response = await fetch('/search_rides', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        user,
+                        start_station: startStation,
+                        end_station: endStation,
+                        start_date: startDate,
+                        end_date: endDate
+                    })
+                });
+                const result = await response.json();
+                const maxDisplayCount = 10; // 设置显示的最大条数
+                const displayRides = result.rides.slice(0, maxDisplayCount); // 截取前maxDisplayCount条数据
+
+                document.getElementById('searchResult').innerHTML = generateTable(displayRides, true);
+                // Save the result to be used later for download
+                window.searchRidesData = result.rides;
+
+                // 显示总记录数
+                document.getElementById('searchResult').innerHTML += `<p>Total records: ${result.total_count}</p>`;
+            });
+
+            // Function to handle form submission for finding shortest path
+            document.getElementById('shortestPathForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const source = document.getElementById('shortestPathSource').value;
+                const target = document.getElementById('shortestPathTarget').value;
+
+                const response = await fetch('/shortest_path', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ source, target })
+                });
+                const result = await response.json();
+                document.getElementById('shortestPathResult').innerHTML = generateMessage(result);
+            });
+
+            // Function to handle form submission for finding alternative paths
+            document.getElementById('alternativePathsForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const source = document.getElementById('alternativePathsSource').value;
+                const target = document.getElementById('alternativePathsTarget').value;
+
+                const response = await fetch('/alternative_paths', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ source, target })
+                });
+                const result = await response.json();
+                document.getElementById('alternativePathsResult').innerHTML = generateMessage(result);
+            });
+            // Function to handle download station graph XLSX
+            document.getElementById('downloadStationGraph').addEventListener('click', async function () {
+                try {
+                    const response = await fetch('/admin/station_graph', {
+                        method: 'GET'
+                    });
+
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        a.download = 'station_graph.xlsx';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                    } else {
+                        const result = await response.json();
+                        alert(`Error: ${result.error}`);
+                    }
+                } catch (error) {
+                    alert(`Error: ${error.message}`);
+                }
+            });
+
+            // Helper function to generate table
+            function generateTable(data, reverseOrder = false) {
+                if (!Array.isArray(data) || data.length === 0) {
+                    return '<p>No data available</p>';
+                }
+
+                data = data.map(item => {
+                    const newItem = { ...item };
+                    if (newItem.start_date) {
+                        newItem.start_date = newItem.start_date.split('00:')[0];
+                    }
+                    if (newItem.end_date) {
+                        newItem.end_date = newItem.end_date.split('00:')[0];
+                    }
+                    return newItem;
+                });
+
+                let table = '<table><thead><tr>';
+                const keys = reverseOrder ? Object.keys(data[0]).reverse() : Object.keys(data[0]);
+                keys.forEach(key => {
+                    table += `<th>${key}</th>`;
+                });
+                table += '</tr></thead><tbody>';
+
+                data.forEach(item => {
+                    table += '<tr>';
+                    const values = reverseOrder ? Object.values(item).reverse() : Object.values(item);
+                    values.forEach(value => {
+                        table += `<td>${value}</td>`;
+                    });
+                    table += '</tr>';
+                });
+
+                table += '</tbody></table>';
+                return table;
+            }
+
+            // Helper function to generate message
+            function generateMessage(data) {
+                if (data.message) {
+                    return `<p>${data.message}</p>`;
+                } else if (data.error) {
+                    return `<p>Error: ${data.error}</p>`;
+                } else if (Array.isArray(data)) {
+                    return generateTable(data);
+                } else if (typeof data === 'object') {
+                    return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+                return '';
+            }
+
+            // Function to download data as Excel file for active rides
+            document.getElementById('downloadActiveRidesExcel').addEventListener('click', function () {
+                const data = window.activeRidesData;
+                if (!data || data.length === 0) {
+                    alert('No data available to download');
+                    return;
+                }
+
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Active Rides');
+
+                XLSX.writeFile(workbook, 'active_rides.xlsx');
+            });
+
+            // Function to download data as Excel file for search rides
+            document.getElementById('downloadSearchRidesExcel').addEventListener('click', function () {
+                const data = window.searchRidesData;
+                if (!data || data.length === 0) {
+                    alert('No data available to download');
+                    return;
+                }
+
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Search Rides');
+
+                XLSX.writeFile(workbook, 'search_rides.xlsx');
+            });
+
+            // Admin related functions
+
+            document.getElementById('shortestPathForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const source = document.getElementById('shortestPathSource').value;
+                const target = document.getElementById('shortestPathTarget').value;
+
+                const response = await fetch('/admin/shortest_path', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ source, target })
+                });
+                const result = await response.json();
+                document.getElementById('shortestPathResult').innerHTML = generateMessage(result);
+            });
+
+            document.getElementById('alternativePathsForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const source = document.getElementById('alternativePathsSource').value;
+                const target = document.getElementById('alternativePathsTarget').value;
+
+                const response = await fetch('/admin/alternative_paths', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ source, target })
+                });
+                const result = await response.json();
+                document.getElementById('alternativePathsResult').innerHTML = generateMessage(result);
+            });
+
+            document.getElementById('stationInsertForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const chinese_name = document.getElementById('stationChineseName').value;
+                const english_name = document.getElementById('stationEnglishName').value;
+                const district = document.getElementById('stationDistrict').value;
+                const intro = document.getElementById('stationIntro').value;
+                const status = document.getElementById('stationStatus').value;
+
+                const response = await fetch('/admin/station_insert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ chinese_name, english_name, district, intro, status })
+                });
+                const result = await response.json();
+                document.getElementById('stationInsertResult').innerHTML = generateMessage(result);
+            });
+
+            document.getElementById('stationDeleteForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const chinese_name = document.getElementById('deleteStationChineseName').value;
+                const english_name = document.getElementById('deleteStationEnglishName').value;
+
+                const response = await fetch('/admin/station_delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ chinese_name, english_name })
+                });
+                const result = await response.json();
+                document.getElementById('stationDeleteResult').innerHTML = generateMessage(result);
+            });
+
+            document.getElementById('stationUpdateForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const old_english_name = document.getElementById('updateStationOldEnglishName').value;
+                const chinese_name = document.getElementById('updateStationChineseName').value;
+                const english_name = document.getElementById('updateStationEnglishName').value;
+                const district = document.getElementById('updateStationDistrict').value;
+                const intro = document.getElementById('updateStationIntro').value;
+                const status = document.getElementById('updateStationStatus').value;
+
+                const response = await fetch('/admin/station_update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ old_english_name, chinese_name, english_name, district, intro, status })
+                });
+                const result = await response.json();
+                document.getElementById('stationUpdateResult').innerHTML = generateMessage(result);
+            });
+
+            document.getElementById('lineInsertForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const line_name = document.getElementById('lineName').value;
+                const start_time = document.getElementById('lineStartTime').value;
+                const end_time = document.getElementById('lineEndTime').value;
+                const intro = document.getElementById('lineIntro').value;
+                const mileage = document.getElementById('lineMileage').value;
+                const color = document.getElementById('lineColor').value;
+                const first_opening = document.getElementById('lineFirstOpening').value;
+                const url = document.getElementById('lineUrl').value;
+
+                const response = await fetch('/admin/line_insert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ line_name, start_time, end_time, intro, mileage, color, first_opening, url })
+                });
+                const result = await response.json();
+                document.getElementById('lineInsertResult').innerHTML = generateMessage(result);
+            });
+
+            document.getElementById('lineDeleteForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const line_name = document.getElementById('deleteLineName').value;
+
+                const response = await fetch('/admin/line_delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ line_name })
+                });
+                const result = await response.json();
+                document.getElementById('lineDeleteResult').innerHTML = generateMessage(result);
+            });
+
+            document.getElementById('lineUpdateForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const old_name = document.getElementById('updateLineOldName').value;
+                const line_name = document.getElementById('updateLineName').value;
+                const start_time = document.getElementById('updateLineStartTime').value;
+                const end_time = document.getElementById('updateLineEndTime').value;
+                const intro = document.getElementById('updateLineIntro').value;
+                const mileage = document.getElementById('updateLineMileage').value;
+                const color = document.getElementById('updateLineColor').value;
+                const first_opening = document.getElementById('updateLineFirstOpening').value;
+                const url = document.getElementById('updateLineUrl').value;
+
+                const response = await fetch('/admin/line_update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ old_name, line_name, start_time, end_time, intro, mileage, color, first_opening, url })
+                });
+                const result = await response.json();
+                document.getElementById('lineUpdateResult').innerHTML = generateMessage(result);
+            });
+
+            document.getElementById('relationInsertForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const line_name = document.getElementById('relationLineName').value;
+                const after_name = document.getElementById('relationAfterName').value;
+                const station_name_list = document.getElementById('relationStationNames').value.split(',');
+
+                const response = await fetch('/admin/relation_insert', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ line_name, after_name, english_name_list: station_name_list })
+                });
+                const result = await response.json();
+                document.getElementById('relationInsertResult').innerHTML = generateMessage(result);
+            });
+
+            // Function to handle form submission for recharging card
+            document.getElementById('rechargeForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const code = document.getElementById('rechargeCode').value;
+                const money = parseFloat(document.getElementById('rechargeMoney').value);
+
+                const response = await fetch('/auth/recharge', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ code, money })
+                });
+                const result = await response.json();
+                document.getElementById('rechargeResult').innerHTML = generateMessage(result);
+            });
+
+            // Helper function to generate message
+            function generateMessage(data) {
+                if (data.message) {
+                    return `<p>${data.message}</p>`;
+                } else if (data.error) {
+                    return `<p>Error: ${data.error}</p>`;
+                }
+                return '';
+            }
+
+
+            // Function to handle form submission for inserting relation at position
+            document.getElementById('relationInsertAtPositionForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const line_name = document.getElementById('relationLineNameAtPosition').value;
+                const position = parseInt(document.getElementById('relationInsertPosition').value);
+                const station_name_list = document.getElementById('relationStationNamesAtPosition').value.split(',').map(name => name.trim());
+                const update_code = document.getElementById('relationUpdateCode').checked;
+
+                const response = await fetch('/admin/relation_insert_at_position', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ line_name, position, english_name_list: station_name_list, update_code })
+                });
+                const result = await response.json();
+                document.getElementById('relationInsertAtPositionResult').innerHTML = generateMessage(result);
+            });
+
+            document.getElementById('relationDeleteForm').addEventListener('submit', async function (event) {
+                event.preventDefault();
+                const line_name = document.getElementById('deleteRelationLineName').value;
+                const station_name = document.getElementById('deleteRelationStationName').value;
+
+                const response = await fetch('/admin/relation_delete', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ line_name, english_name: station_name })
+                });
+                const result = await response.json();
+                document.getElementById('relationDeleteResult').innerHTML = generateMessage(result);
+            });
+
+            // Helper function to generate message
+            function generateMessage(data) {
+                if (data.message) {
+                    return `<p>${data.message}</p>`;
+                } else if (data.error) {
+                    return `<p>Error: ${data.error}</p>`;
+                } else if (Array.isArray(data)) {
+                    return generateTable(data);
+                } else if (typeof data === 'object') {
+                    return `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                }
+                return '';
+            }
+
+            // Helper function to generate table
+            function generateTable(data) {
+                if (!Array.isArray(data) || data.length === 0) {
+                    return '<p>No data available</p>';
+                }
+
+                let table = '<table><thead><tr>';
+                Object.keys(data[0]).forEach(key => {
+                    table += `<th>${key}</th>`;
+                });
+                table += '</tr></thead><tbody>';
+
+                data.forEach(item => {
+                    table += '<tr>';
+                    Object.values(item).forEach(value => {
+                        table += `<td>${value}</td>`;
+                    });
+                    table += '</tr>';
+                });
+
+                table += '</tbody></table>';
+                return table;
+            }
+        </script>
+    </div>
+</body>
+
+</html>
