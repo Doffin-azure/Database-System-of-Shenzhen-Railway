@@ -13,6 +13,6 @@ cd project
 python -m pip install -r requirements.txt
 ```
 
-Set up local MySQL and export `DATABASE_URL` and a private `SECRET_KEY` in your shell using [.env.example](.env.example) as a reference. From `project/`, run `flask --app run db upgrade`, then `python run.py`. You may need the MySQL client development libraries to install `mysqlclient`.
+Create a local MySQL database and export `DATABASE_URL` and a private `SECRET_KEY` in your shell using [.env.example](.env.example) as a reference. From `project/`, run `flask --app run init-db` to create the tables, then `python run.py`. You may need the MySQL client development libraries to install `mysqlclient`.
 
-Tests require `TEST_DATABASE_URL` for a separate disposable database.
+To run the tests, set `TEST_DATABASE_URL` to a separate MySQL database and run `python -m unittest discover -s tests` from `project/`.

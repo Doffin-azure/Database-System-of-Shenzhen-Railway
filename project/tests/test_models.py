@@ -1,35 +1,50 @@
+from datetime import date, time
+from decimal import Decimal
 import unittest
+from uuid import uuid4
+
 from app import create_app
 from app.extensions import db
-from app.models import Station, Line, StationLine
+from app.models import Line, Station, StationLine
 
-class ExistingDataTestCase(unittest.TestCase):
+
+class StationLineTestCase(unittest.TestCase):
     def setUp(self):
-        """Set up test variables and initialize app."""
-        self.app = create_app('config_test.TestConfig')
-        self.app_context = self.app.app_context()
-        self.app_context.push()
+        app = create_app("config_test.TestConfig")
+        context = app.app_context()
+        context.push()
+        self.addCleanup(context.pop)
+        self.addCleanup(db.session.rollback)
         db.create_all()
 
-    def tearDown(self):
-        db.session.remove()
-        db.drop_all()
-        self.app_context.pop()
+    def test_station_line_round_trip(self):
+        suffix = uuid4().hex
+        station = Station(
+            chinese_name=f"测试站-{suffix}",
+            english_name=f"TestStation-{suffix}",
+            district="Test District",
+            intro="Test fixture",
+        )
+        line = Line(
+            line_name=f"TestLine-{suffix}",
+            start_time=time(6),
+            end_time=time(23),
+            intro="Test fixture",
+            mileage=Decimal("12.30"),
+            color="blue",
+            first_opening=date(2024, 1, 1),
+            url="https://example.com",
+        )
+        db.session.add_all([station, line])
+        db.session.flush()
+        db.session.add(StationLine(
+            station_name=station.english_name,
+            line_name=line.line_name,
+            station_code=1,
+        ))
+        db.session.flush()
+        db.session.expire_all()
 
-    def test_existing_station_lines(self):
-        # 查询现有的 StationLine 数据
-        station_lines = StationLine.query.all()
-        print("StationLine data from database:")
-        for sl in station_lines:
-            print(f"Station: {sl.station_name}, Line: {sl.line_name}, Code: {sl.station_code}")
-        
-        # 断言数据库中是否有数据
-        self.assertGreater(len(station_lines), 0, "No StationLine data found in the database.")
-        
-        # 进一步检查某些特定数据
-        central_station_line = StationLine.query.filter_by(station_name='CentralStation', line_name='BlueLine').first()
-        self.assertIsNotNone(central_station_line, "CentralStation on BlueLine not found in database.")
-        self.assertEqual(central_station_line.station_code, 1, "Station code for CentralStation on BlueLine is incorrect.")
-
-if __name__ == '__main__':
-    unittest.main()
+        association = db.session.get(StationLine, (station.english_name, line.line_name))
+        self.assertIsNotNone(association)
+        self.assertEqual(association.station_code, 1)
