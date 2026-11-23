@@ -1,6 +1,6 @@
 # Shenzhen Railway Database System
 
-A SUSTech CS307 course project for managing railway stations and passenger records through a Flask web application backed by MySQL.
+A course project for SUSTech's [CS307 Principles of Database Systems](https://mirrors.sustech.edu.cn/courses/syllabus/html/CS307.html). It uses MySQL and Flask to manage railway stations, lines, and passenger records.
 
 ## Explore or run locally
 
