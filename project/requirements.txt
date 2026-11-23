@@ -1,4 +1,8 @@
 Flask
 Flask-SQLAlchemy
 Flask-Migrate
+Flask-Login
+Flask-Principal
 mysqlclient
+networkx
+XlsxWriter

@@ -13,4 +13,6 @@ cd project
 python -m pip install -r requirements.txt
 ```
 
-Set up a local MySQL instance and adapt the [database configuration](project/config.py) before running `python run.py` from `project/`. You may need the MySQL client development libraries to install `mysqlclient`.
+Set up local MySQL and export `DATABASE_URL` and a private `SECRET_KEY` in your shell using [.env.example](.env.example) as a reference. From `project/`, run `flask --app run db upgrade`, then `python run.py`. You may need the MySQL client development libraries to install `mysqlclient`.
+
+Tests require `TEST_DATABASE_URL` for a separate disposable database.
